@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useTallyStore } from "../store/useTallyStore";
-import { Plus, Search, SortAsc, Save, Share2, Trash2, Edit2 } from "lucide-react";
+import { Plus, Search, SortAsc, Save, Share2, Trash2, Edit2, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { toPng } from "html-to-image";
 
 export default function Home() {
-  const { tallies, fetchTallies, createTally, deleteTally } = useTallyStore();
+  const { tallies, fetchTallies, createTally, deleteTally, updateTally } = useTallyStore();
   const [newTallyName, setNewTallyName] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("latest");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
 
   useEffect(() => {
     fetchTallies(search, sort);
@@ -23,6 +25,16 @@ export default function Home() {
     if (!newTallyName.trim()) return;
     createTally(newTallyName);
     setNewTallyName("");
+  };
+
+  const handleNameSave = (tally: any) => {
+    if (!editName.trim() || editName === tally.name) {
+      setEditingId(null);
+      return;
+    }
+    updateTally(tally._id, { name: editName });
+    setEditingId(null);
+    toast.success("Name updated");
   };
 
   const handleSaveAll = async () => {
@@ -163,12 +175,33 @@ export default function Home() {
                   href={`/tally/${tally._id}`}
                   className="flex-grow flex items-center justify-between pr-4 sm:pr-6 cursor-pointer mb-3 sm:mb-0 w-full sm:w-auto"
                 >
-                  <div className="flex flex-col">
-                    <span className="text-lg sm:text-xl font-bold text-slate-800">{tally.name}</span>
-                    <span className="text-xs sm:text-sm text-slate-800">
-                      {new Date(tally.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
+                  {editingId === tally._id ? (
+                    <div className="flex items-center gap-2" onClick={(e) => e.preventDefault()}>
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="bg-white border-2 border-blue-500 rounded-lg px-3 py-1.5 text-lg sm:text-xl font-bold w-full focus:outline-none text-slate-800 shadow-sm"
+                        autoFocus
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            handleNameSave(tally);
+                          } else if (e.key === "Escape") {
+                            e.preventDefault();
+                            setEditingId(null);
+                          }
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col">
+                      <span className="text-lg sm:text-xl font-bold text-slate-800">{tally.name}</span>
+                      <span className="text-xs sm:text-sm text-slate-800">
+                        {new Date(tally.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  )}
                   <div className="flex items-center justify-center h-10 w-14 sm:h-12 sm:w-16 bg-blue-50 rounded-xl text-xl sm:text-2xl font-black text-blue-600 border border-blue-100 group-hover:bg-blue-100 transition-colors">
                     {tally.count}
                   </div>
@@ -178,12 +211,22 @@ export default function Home() {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      toast("Edit coming soon! (via detail page)", { icon: "✏️" });
+                      e.preventDefault();
+                      if (editingId === tally._id) {
+                        handleNameSave(tally);
+                      } else {
+                        setEditingId(tally._id);
+                        setEditName(tally.name);
+                      }
                     }}
                     className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 transition-all transform active:scale-95"
-                    title="Edit Tally"
+                    title={editingId === tally._id ? "Save Name" : "Edit Tally"}
                   >
-                    <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    {editingId === tally._id ? (
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                    ) : (
+                      <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    )}
                   </button>
                   <button
                     onClick={(e) => {
