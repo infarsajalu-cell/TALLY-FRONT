@@ -1,21 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTallyStore } from "@/store/useTallyStore";
-import { Plus, Search, SortAsc, Save, Share2, Trash2, Edit2, Check } from "lucide-react";
+import { useTallyStore } from "../store/useTallyStore";
+import { Plus, Search, SortAsc, Save, Share2, Trash2, Edit2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { toPng } from "html-to-image";
 
 export default function Home() {
-  const { tallies, fetchTallies, createTally, deleteTally, updateTally } = useTallyStore();
+  const { tallies, fetchTallies, createTally, deleteTally } = useTallyStore();
   const [newTallyName, setNewTallyName] = useState("");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState("latest");
-
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
 
   useEffect(() => {
     fetchTallies(search, sort);
@@ -69,20 +66,6 @@ export default function Home() {
     } catch (err) {
       toast.error("Failed to share.");
     }
-  };
-
-  const handleEditInit = (e: React.MouseEvent, tallyId: string, currentName: string) => {
-    e.stopPropagation();
-    setEditingId(tallyId);
-    setEditName(currentName);
-  };
-
-  const handleEditSave = async (tallyId: string, currentName: string) => {
-    if (editName.trim() && editName !== currentName) {
-      await updateTally(tallyId, { name: editName });
-      toast.success("Tally renamed successfully!");
-    }
-    setEditingId(null);
   };
 
   return (
@@ -176,57 +159,32 @@ export default function Home() {
               >
                 <div className="absolute inset-y-0 left-0 w-1 bg-gradient-to-b from-blue-400 to-indigo-500 rounded-l-2xl opacity-0 group-hover:opacity-100 transition-opacity" />
                 
-                {editingId === tally._id ? (
-                  <div className="flex-grow flex items-center justify-between pr-4 sm:pr-6 mb-3 sm:mb-0 w-full sm:w-auto">
-                    <div className="flex flex-col w-full mr-4">
-                      <input
-                        type="text"
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        className="bg-slate-50 border-2 border-blue-500 rounded-lg px-3 py-1.5 text-lg sm:text-xl font-bold text-slate-800 w-full focus:outline-none"
-                        autoFocus
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleEditSave(tally._id, tally.name);
-                          if (e.key === "Escape") setEditingId(null);
-                        }}
-                      />
-                    </div>
+                <Link
+                  href={`/tally/${tally._id}`}
+                  className="flex-grow flex items-center justify-between pr-4 sm:pr-6 cursor-pointer mb-3 sm:mb-0 w-full sm:w-auto"
+                >
+                  <div className="flex flex-col">
+                    <span className="text-lg sm:text-xl font-bold text-slate-800">{tally.name}</span>
+                    <span className="text-xs sm:text-sm text-slate-800">
+                      {new Date(tally.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                ) : (
-                  <Link
-                    href={`/tally/${tally._id}`}
-                    className="flex-grow flex items-center justify-between pr-4 sm:pr-6 cursor-pointer mb-3 sm:mb-0 w-full sm:w-auto"
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-lg sm:text-xl font-bold text-slate-800">{tally.name}</span>
-                      <span className="text-xs sm:text-sm text-slate-800">
-                        {new Date(tally.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-center h-10 w-14 sm:h-12 sm:w-16 bg-blue-50 rounded-xl text-xl sm:text-2xl font-black text-blue-600 border border-blue-100 group-hover:bg-blue-100 transition-colors">
-                      {tally.count}
-                    </div>
-                  </Link>
-                )}
+                  <div className="flex items-center justify-center h-10 w-14 sm:h-12 sm:w-16 bg-blue-50 rounded-xl text-xl sm:text-2xl font-black text-blue-600 border border-blue-100 group-hover:bg-blue-100 transition-colors">
+                    {tally.count}
+                  </div>
+                </Link>
 
                 <div data-html2canvas-ignore="true" className="flex gap-2 isolate w-full sm:w-auto justify-end sm:justify-start">
-                  {editingId === tally._id ? (
-                    <button
-                      onClick={() => handleEditSave(tally._id, tally.name)}
-                      className="p-2 sm:p-2.5 rounded-xl bg-green-100 hover:bg-green-200 text-green-700 transition-all transform active:scale-95"
-                      title="Save Edit"
-                    >
-                      <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  ) : (
-                    <button
-                      onClick={(e) => handleEditInit(e, tally._id, tally.name)}
-                      className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 transition-all transform active:scale-95"
-                      title="Edit Tally"
-                    >
-                      <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toast("Edit coming soon! (via detail page)", { icon: "✏️" });
+                    }}
+                    className="p-2 sm:p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-900 transition-all transform active:scale-95"
+                    title="Edit Tally"
+                  >
+                    <Edit2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
