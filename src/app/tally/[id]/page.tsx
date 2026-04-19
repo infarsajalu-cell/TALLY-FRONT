@@ -12,12 +12,13 @@ import api from "@/lib/api";
 import { toPng } from "html-to-image";
 
 interface DetailsPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function TallyDetailPage({ params }: DetailsPageProps) {
   const router = useRouter();
-  const { id } = params;
+  const unwrappedParams = use(params);
+  const { id } = unwrappedParams;
   
   const { tallies, updateTally, deleteTally } = useTallyStore();
   
