@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTallyStore } from "../store/useTallyStore";
-import { Plus, Search, SortAsc, Save, Share2, Trash2, Edit2, Check } from "lucide-react";
+import { Plus, Search, SortAsc, Save, Share2, Trash2, Edit2, Check, RefreshCw } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import toast from "react-hot-toast";
@@ -15,6 +15,7 @@ export default function Home() {
   const [sort, setSort] = useState("latest");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [isRefetching, setIsRefetching] = useState(false);
 
   useEffect(() => {
     fetchTallies(search, sort);
@@ -25,6 +26,16 @@ export default function Home() {
     if (!newTallyName.trim()) return;
     createTally(newTallyName);
     setNewTallyName("");
+  };
+
+  const handleRefetch = async () => {
+    setIsRefetching(true);
+    try {
+      await fetchTallies(search, sort);
+      toast.success("Refreshed tallies!");
+    } finally {
+      setIsRefetching(false);
+    }
   };
 
   const handleNameSave = (tally: any) => {
@@ -87,6 +98,14 @@ export default function Home() {
           My Tallies
         </h1>
         <div className="flex gap-2 sm:gap-3">
+          <button
+            onClick={handleRefetch}
+            disabled={isRefetching}
+            className="p-2 sm:p-2.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 transition-all shadow-sm hover:shadow active:scale-95 text-slate-900 disabled:opacity-50"
+            title="Refresh Data"
+          >
+            <RefreshCw className={`w-5 h-5 text-emerald-500 ${isRefetching ? 'animate-spin' : ''}`} />
+          </button>
           <button
             onClick={handleSaveAll}
             className="p-2 sm:p-2.5 rounded-full bg-white hover:bg-slate-50 border border-slate-200 transition-all shadow-sm hover:shadow active:scale-95 text-slate-900"
